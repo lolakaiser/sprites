@@ -1,14 +1,14 @@
 import { MongoClient } from 'mongodb';
 
 const uri = process.env.MONGODB_URI;
-let client;
+let clientPromise;
 
-async function getClient() {
-  if (!client) {
-    client = new MongoClient(uri);
-    await client.connect();
+function getClientPromise() {
+  if (!clientPromise) {
+    const client = new MongoClient(uri);
+    clientPromise = client.connect().then(() => client);
   }
-  return client;
+  return clientPromise;
 }
 
 export default async function handler(req, res) {
@@ -17,14 +17,19 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
+  let client;
   try {
-    const c = await getClient();
-    const db = c.db('sprite-tracker');
-    const col = db.collection('owned');
+    client = await getClientPromise();
+  } catch (err) {
+    clientPromise = null;
+    return res.status(500).json({ error: 'DB connection failed: ' + err.message });
+  }
+
+  try {
+    const col = client.db('sprite-tracker').collection('owned');
 
     if (req.method === 'GET') {
       const docs = await col.find({}).toArray();
-      // shape: { player: "lola", spriteId: "water", variantIdx: 0, owned: true }
       const result = {};
       docs.forEach(d => {
         if (!result[d.player]) result[d.player] = {};
@@ -48,7 +53,7 @@ export default async function handler(req, res) {
 
     res.status(405).json({ error: 'Method not allowed' });
   } catch (err) {
-    console.error(err);
+    clientPromise = null;
     res.status(500).json({ error: err.message });
   }
 }
