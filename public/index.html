@@ -658,7 +658,12 @@ async function saveAll(){
 
 (async function(){
   await loadData();
-  renderHome();
+  var savedPlayer = localStorage.getItem('player');
+  if (savedPlayer && PLAYERS.indexOf(savedPlayer) !== -1) {
+    enterApp(savedPlayer);
+  } else {
+    renderHome();
+  }
 })();
 
 </script>
