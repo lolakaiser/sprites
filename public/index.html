@@ -167,8 +167,9 @@ tbody td:last-child{border-right:1px solid var(--border);border-radius:0 10px 10
 </header>
 
 <div class="page-tabs">
-  <button class="page-tab active" id="tab-my" onclick="showPage('my')"><span class="tab-icon">⚡</span>My Collection</button>
+  <button class="page-tab active" id="tab-my" onclick="showPage('my')"><span class="tab-icon">⚡</span>Mine</button>
   <button class="page-tab" id="tab-overview" onclick="showPage('overview')"><span class="tab-icon">👥</span>Group</button>
+  <button class="page-tab" id="tab-leaderboard" onclick="showPage('leaderboard')"><span class="tab-icon">🏆</span>Ranks</button>
   <button class="page-tab" id="tab-info" onclick="showPage('info')"><span class="tab-icon">📖</span>Info</button>
 </div>
 
@@ -195,8 +196,11 @@ tbody td:last-child{border-right:1px solid var(--border);border-radius:0 10px 10
     <button class="vfbtn" id="vf2" onclick="setVF(2)">Gummy</button>
     <button class="vfbtn" id="vf3" onclick="setVF(3)">Galaxy</button>
   </div>
-  <div id="lb-content"></div>
   <div id="ov-content"></div>
+</div>
+
+<div class="page" id="page-leaderboard">
+  <div id="lb-content"></div>
 </div>
 
 <div class="page" id="page-info">
@@ -304,12 +308,13 @@ function renderPTabs() {
 }
 
 function showPage(name) {
-  ['my','overview','info'].forEach(function(pg) {
+  ['my','overview','leaderboard','info'].forEach(function(pg) {
     document.getElementById('page-' + pg).classList.toggle('active', pg === name);
     document.getElementById('tab-' + pg).classList.toggle('active', pg === name);
   });
   if (name === 'info') renderInfo();
-  if (name === 'overview') { renderLeaderboard(); renderOv(); }
+  if (name === 'overview') renderOv();
+  if (name === 'leaderboard') renderLeaderboard();
 }
 
 function updateStats() {
