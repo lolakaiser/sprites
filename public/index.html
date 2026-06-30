@@ -68,9 +68,14 @@ tbody td:last-child{border-right:1px solid var(--border);border-radius:0 10px 10
 .cbtn.og{border-color:var(--gold);background:rgba(245,200,66,.15);box-shadow:0 0 10px rgba(245,200,66,.3)}
 .cbtn.ou{border-color:var(--gummy);background:rgba(255,121,198,.15);box-shadow:0 0 10px rgba(255,121,198,.3)}
 .cbtn.ox{border-color:var(--galaxy);background:rgba(155,89,182,.15);box-shadow:0 0 10px rgba(155,89,182,.3)}
+.cbtn.mastered.ob{box-shadow:0 0 16px rgba(100,181,246,.7)}
+.cbtn.mastered.og{box-shadow:0 0 16px rgba(245,200,66,.7)}
+.cbtn.mastered.ou{box-shadow:0 0 16px rgba(255,121,198,.7)}
+.cbtn.mastered.ox{box-shadow:0 0 16px rgba(155,89,182,.7)}
 .cbtn.na{opacity:.2;cursor:default;pointer-events:none;font-size:.7rem;color:var(--muted)}
-.check-overlay{position:absolute;bottom:2px;right:2px;width:14px;height:14px;border-radius:50%;background:var(--accent);display:none;align-items:center;justify-content:center;font-size:9px;color:#fff;font-weight:900;line-height:1}
+.check-overlay{position:absolute;bottom:2px;right:2px;width:16px;height:16px;border-radius:50%;background:var(--accent);display:none;align-items:center;justify-content:center;font-size:9px;color:#fff;font-weight:900;line-height:1}
 .cbtn.owned .check-overlay{display:flex}
+.cbtn.mastered .check-overlay{background:var(--gold);font-size:10px}
 .rb{display:inline-flex;align-items:center;font-size:.62rem;font-weight:800;padding:1px 6px;border-radius:6px;text-transform:uppercase}
 .rr{background:rgba(74,144,226,.15);color:var(--rare);border:1px solid rgba(74,144,226,.4)}
 .re{background:rgba(168,85,247,.15);color:var(--epic);border:1px solid rgba(168,85,247,.4)}
@@ -85,6 +90,7 @@ tbody td:last-child{border-right:1px solid var(--border);border-radius:0 10px 10
 .hcell{width:30px;height:30px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;font-size:.85rem;font-weight:900}
 .hyes{background:rgba(46,204,113,.2);color:var(--green);border:1.5px solid var(--green)}
 .hno{background:rgba(231,76,60,.12);color:var(--red);border:1.5px solid rgba(231,76,60,.4)}
+.hmaster{background:rgba(245,200,66,.2);color:var(--gold);border:1.5px solid var(--gold)}
 /* info page */
 .info-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;padding:0 14px 14px}
 .icard{background:var(--card);border:1.5px solid var(--border);border-radius:14px;padding:12px 10px;cursor:pointer;transition:all .18s;text-align:center;-webkit-tap-highlight-color:transparent}
@@ -142,7 +148,7 @@ tbody td:last-child{border-right:1px solid var(--border);border-radius:0 10px 10
   <div class="subtitle">Fortnite Emoticon Collection</div>
   <div class="stats-bar" id="sbar">
     <div class="stat">Owned: <span id="so">0</span></div>
-    <div class="stat">Available: <span id="st">0</span></div>
+    <div class="stat">&#11088; Mastered: <span id="sm">0</span></div>
     <div class="stat">Complete: <span id="sp">0%</span></div>
   </div>
   <div class="prog-wrap"><div class="prog-fill" id="pf" style="width:0%"></div></div>
@@ -259,9 +265,15 @@ function pd(player) {
   return allData[player];
 }
 
-function owned(player, id, i) {
-  return !!(pd(player)[k(id, i)]);
+function ownedLevel(player, id, i) {
+  var v = pd(player)[k(id, i)];
+  if (v === 2) return 2;
+  if (v === true || v === 1) return 1;
+  return 0;
 }
+
+function owned(player, id, i) { return ownedLevel(player, id, i) >= 1; }
+function isMastered(player, id, i) { return ownedLevel(player, id, i) === 2; }
 
 function switchP(name) {
   curPlayer = name;
@@ -288,14 +300,19 @@ function showPage(name) {
 }
 
 function updateStats() {
-  var total = 0, got = 0;
+  var total = 0, got = 0, mastered = 0;
   SPRITES.forEach(function(s) {
     s.v.forEach(function(a, i) {
-      if (a) { total++; if (owned(curPlayer, s.id, i)) got++; }
+      if (a) {
+        total++;
+        var lv = ownedLevel(curPlayer, s.id, i);
+        if (lv >= 1) got++;
+        if (lv === 2) mastered++;
+      }
     });
   });
   document.getElementById('so').textContent = got;
-  document.getElementById('st').textContent = total;
+  document.getElementById('sm').textContent = mastered;
   document.getElementById('sp').textContent = total > 0 ? (got / total * 100).toFixed(0) + '%' : '0%';
   document.getElementById('pf').style.width = (total > 0 ? got / total * 100 : 0).toFixed(1) + '%';
 }
@@ -323,11 +340,13 @@ function renderMy(){
     h+='</div></div></td>';
     s.v.forEach(function(a,i){
       if(!a){ h+='<td><button class="cbtn na">&mdash;</button></td>'; return; }
-      var o=owned(curPlayer,s.id,i);
-      var vc=o?VCLS[i]:"";
+      var lv=ownedLevel(curPlayer,s.id,i);
+      var vc=lv>0?VCLS[i]:"";
+      var mc=lv===2?" mastered":"";
+      var icon=lv===2?"&#11088;":lv===1?"&#10003;":"";
       var src=IMGS[s.id]?IMGS[s.id][i]:null;
       var imgInner=src?'<img src="'+src+'" alt="" onerror="this.style.display=\'none\'">':'';
-      h+='<td><button class="cbtn '+(o?"owned ":"")+vc+'" onclick="toggle(\''+s.id+'\','+i+')">'+imgInner+'<div class="check-overlay">&#10003;</div></button></td>';
+      h+='<td><button class="cbtn '+(lv>0?"owned ":"")+vc+mc+'" onclick="toggle(\''+s.id+'\','+i+')">'+imgInner+'<div class="check-overlay">'+icon+'</div></button></td>';
     });
     var cc=ro===rt?"var(--gold)":"var(--muted)";
     h+='<td style="font-size:.7rem;font-weight:900;color:'+cc+'">'+ro+"/"+rt+"</td></tr>";
@@ -362,8 +381,10 @@ function renderOv(){
     var img=src?'<img src="'+src+'" style="width:28px;height:28px;object-fit:contain;margin-right:6px;vertical-align:middle" alt="" onerror="this.style.display=\'none\'">':'';
     h+='<tr><td><div class="slabel">'+img+'<span style="font-weight:800;font-size:.82rem">'+s.name+'</span></div></td>';
     PLAYERS.forEach(function(p){
-      var has=owned(p,s.id,vi);
-      h+='<td><div class="hcell '+(has?"hyes":"hno")+'">'+(has?"&#10003;":"&#10007;")+'</div></td>';
+      var lv=ownedLevel(p,s.id,vi);
+      var cls=lv===2?"hmaster":lv===1?"hyes":"hno";
+      var icon=lv===2?"&#11088;":lv===1?"&#10003;":"&#10007;";
+      h+='<td><div class="hcell '+cls+'">'+icon+'</div></td>';
     });
     var nc=needs.length>0?"var(--red)":"var(--muted)";
     h+='<td style="font-size:.75rem;font-weight:800;color:var(--green)">'+haves.length+'</td>';
@@ -474,13 +495,13 @@ function markDirty() {
 }
 
 function toggle(id, i) {
-  pd(curPlayer)[k(id,i)] = !owned(curPlayer,id,i);
+  pd(curPlayer)[k(id,i)] = (ownedLevel(curPlayer,id,i) + 1) % 3;
   renderMy(); renderOv(); updateStats();
   markDirty();
 }
 
 function checkAll(){
-  SPRITES.forEach(function(s){ s.v.forEach(function(a,i){ if(a) pd(curPlayer)[k(s.id,i)]=1; }); });
+  SPRITES.forEach(function(s){ s.v.forEach(function(a,i){ if(a && ownedLevel(curPlayer,s.id,i)===0) pd(curPlayer)[k(s.id,i)]=1; }); });
   renderMy(); renderOv(); updateStats();
   markDirty(); toast('All checked — hit Save to keep!');
 }
